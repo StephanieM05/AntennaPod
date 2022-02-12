@@ -139,7 +139,7 @@ public class PlaybackServiceTaskManagerTest {
         final FeedItem testItem = pstm.getQueue().get(0);
         assertFalse("The item should not yet be downloaded", testItem.getMedia().isDownloaded());
 
-        withFeedItemEventListener( feedItemEventListener -> {
+        withFeedItemEventListener(feedItemEventListener -> {
             // simulate download complete (in DownloadService.MediaHandlerThread)
             FeedItem item = DBReader.getFeedItem(testItem.getId());
             item.getMedia().setDownloaded(true);
