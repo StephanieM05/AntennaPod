@@ -1,9 +1,10 @@
-package de.danoeh.antennapod.playback.base;
+package de.danoeh.antennapod.core.service.playback;
 
 import android.content.Context;
 import android.media.AudioManager;
 import android.net.wifi.WifiManager;
 import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
 import android.util.Log;
 import android.util.Pair;
 import android.view.SurfaceHolder;
@@ -11,7 +12,6 @@ import android.view.SurfaceHolder;
 import java.util.List;
 import java.util.concurrent.Future;
 
-import androidx.annotation.Nullable;
 import de.danoeh.antennapod.model.playback.MediaType;
 import de.danoeh.antennapod.model.playback.Playable;
 
@@ -31,20 +31,20 @@ public abstract class PlaybackServiceMediaPlayer {
     /**
      * Return value of some PSMP methods if the method call failed.
      */
-    public static final int INVALID_TIME = -1;
+    static final int INVALID_TIME = -1;
 
     private volatile PlayerStatus oldPlayerStatus;
-    protected volatile PlayerStatus playerStatus;
+    volatile PlayerStatus playerStatus;
 
     /**
      * A wifi-lock that is acquired if the media file is being streamed.
      */
     private WifiManager.WifiLock wifiLock;
 
-    protected final PSMPCallback callback;
-    protected final Context context;
+    final PSMPCallback callback;
+    final Context context;
 
-    protected PlaybackServiceMediaPlayer(@NonNull Context context,
+    PlaybackServiceMediaPlayer(@NonNull Context context,
                                @NonNull PSMPCallback callback){
         this.context = context;
         this.callback = callback;
@@ -281,9 +281,7 @@ public abstract class PlaybackServiceMediaPlayer {
      */
     protected abstract boolean shouldLockWifi();
 
-    public abstract boolean isCasting();
-
-    protected final synchronized void acquireWifiLockIfNecessary() {
+    final synchronized void acquireWifiLockIfNecessary() {
         if (shouldLockWifi()) {
             if (wifiLock == null) {
                 wifiLock = ((WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE))
@@ -294,7 +292,7 @@ public abstract class PlaybackServiceMediaPlayer {
         }
     }
 
-    protected final synchronized void releaseWifiLockIfNecessary() {
+    final synchronized void releaseWifiLockIfNecessary() {
         if (wifiLock != null && wifiLock.isHeld()) {
             wifiLock.release();
         }
@@ -315,8 +313,7 @@ public abstract class PlaybackServiceMediaPlayer {
      * @param position  The position to be set to the current Playable object in case playback started or paused.
      *                  Will be ignored if given the value of {@link #INVALID_TIME}.
      */
-    protected final synchronized void setPlayerStatus(@NonNull PlayerStatus newStatus,
-                                                      Playable newMedia, int position) {
+    final synchronized void setPlayerStatus(@NonNull PlayerStatus newStatus, Playable newMedia, int position) {
         Log.d(TAG, this.getClass().getSimpleName() + ": Setting player status to " + newStatus);
 
         this.oldPlayerStatus = playerStatus;
@@ -342,7 +339,7 @@ public abstract class PlaybackServiceMediaPlayer {
     /**
      * @see #setPlayerStatus(PlayerStatus, Playable, int)
      */
-    protected final void setPlayerStatus(@NonNull PlayerStatus newStatus, Playable newMedia) {
+    final void setPlayerStatus(@NonNull PlayerStatus newStatus, Playable newMedia) {
         setPlayerStatus(newStatus, newMedia, INVALID_TIME);
     }
 
@@ -351,7 +348,15 @@ public abstract class PlaybackServiceMediaPlayer {
 
         void shouldStop();
 
+        void playbackSpeedChanged(float s);
+
+        void onBufferingUpdate(int percent);
+
         void onMediaChanged(boolean reloadUI);
+
+        boolean onMediaPlayerInfo(int code, @StringRes int resourceId);
+
+        boolean onMediaPlayerError(Object inObj, int what, int extra);
 
         void onPostPlayback(@NonNull Playable media, boolean ended, boolean skipped, boolean playingNext);
 
@@ -361,12 +366,7 @@ public abstract class PlaybackServiceMediaPlayer {
 
         Playable getNextInQueue(Playable currentMedia);
 
-        @Nullable
-        Playable findMedia(@NonNull String url);
-
         void onPlaybackEnded(MediaType mediaType, boolean stopPlaying);
-
-        void ensureMediaInfoLoaded(@NonNull Playable media);
     }
 
     /**
@@ -377,7 +377,7 @@ public abstract class PlaybackServiceMediaPlayer {
         public PlayerStatus playerStatus;
         public Playable playable;
 
-        public PSMPInfo(PlayerStatus oldPlayerStatus, PlayerStatus playerStatus, Playable playable) {
+        PSMPInfo(PlayerStatus oldPlayerStatus, PlayerStatus playerStatus, Playable playable) {
             this.oldPlayerStatus = oldPlayerStatus;
             this.playerStatus = playerStatus;
             this.playable = playable;
