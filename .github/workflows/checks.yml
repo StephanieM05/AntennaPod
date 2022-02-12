@@ -14,10 +14,6 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Checkstyle
-        run: |
-          curl -s -L https://github.com/checkstyle/checkstyle/releases/download/checkstyle-9.2.1/checkstyle-9.2.1-all.jar > checkstyle.jar
-          find . -name "*\.java" | xargs java -Dconfig_loc=config/checkstyle -jar checkstyle.jar -c config/checkstyle/checkstyle.xml
       - name: Find PR Base Commit
         id: vars
         run: |
