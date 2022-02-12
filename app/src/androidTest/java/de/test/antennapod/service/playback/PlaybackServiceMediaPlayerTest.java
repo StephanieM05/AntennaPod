@@ -2,12 +2,9 @@ package de.test.antennapod.service.playback;
 
 import android.content.Context;
 
-import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.MediumTest;
 
 import de.danoeh.antennapod.model.feed.VolumeAdaptionSetting;
-import de.danoeh.antennapod.playback.base.PlaybackServiceMediaPlayer;
-import de.danoeh.antennapod.playback.base.PlayerStatus;
 import de.test.antennapod.EspressoTestUtils;
 import junit.framework.AssertionFailedError;
 
@@ -27,6 +24,8 @@ import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.core.service.playback.LocalPSMP;
+import de.danoeh.antennapod.core.service.playback.PlaybackServiceMediaPlayer;
+import de.danoeh.antennapod.core.service.playback.PlayerStatus;
 import de.danoeh.antennapod.core.storage.PodDBAdapter;
 import de.danoeh.antennapod.model.playback.Playable;
 import de.test.antennapod.util.service.download.HTTPBin;
@@ -57,14 +56,12 @@ public class PlaybackServiceMediaPlayerTest {
     private volatile AssertionFailedError assertionError;
 
     @After
-    @UiThreadTest
     public void tearDown() throws Exception {
         PodDBAdapter.deleteDatabase();
         httpServer.stop();
     }
 
     @Before
-    @UiThreadTest
     public void setUp() throws Exception {
         assertionError = null;
         EspressoTestUtils.clearPreferences();
@@ -120,7 +117,6 @@ public class PlaybackServiceMediaPlayerTest {
     }
 
     @Test
-    @UiThreadTest
     public void testInit() {
         final Context c = getInstrumentation().getTargetContext();
         PlaybackServiceMediaPlayer psmp = new LocalPSMP(c, new DefaultPSMPCallback());
@@ -145,7 +141,6 @@ public class PlaybackServiceMediaPlayerTest {
     }
 
     @Test
-    @UiThreadTest
     public void testPlayMediaObjectStreamNoStartNoPrepare() throws InterruptedException {
         final Context c = getInstrumentation().getTargetContext();
         final CountDownLatch countDownLatch = new CountDownLatch(2);
@@ -186,7 +181,6 @@ public class PlaybackServiceMediaPlayerTest {
     }
 
     @Test
-    @UiThreadTest
     public void testPlayMediaObjectStreamStartNoPrepare() throws InterruptedException {
         final Context c = getInstrumentation().getTargetContext();
         final CountDownLatch countDownLatch = new CountDownLatch(2);
@@ -228,7 +222,6 @@ public class PlaybackServiceMediaPlayerTest {
     }
 
     @Test
-    @UiThreadTest
     public void testPlayMediaObjectStreamNoStartPrepare() throws InterruptedException {
         final Context c = getInstrumentation().getTargetContext();
         final CountDownLatch countDownLatch = new CountDownLatch(4);
@@ -271,7 +264,6 @@ public class PlaybackServiceMediaPlayerTest {
     }
 
     @Test
-    @UiThreadTest
     public void testPlayMediaObjectStreamStartPrepare() throws InterruptedException {
         final Context c = getInstrumentation().getTargetContext();
         final CountDownLatch countDownLatch = new CountDownLatch(5);
@@ -316,7 +308,6 @@ public class PlaybackServiceMediaPlayerTest {
     }
 
     @Test
-    @UiThreadTest
     public void testPlayMediaObjectLocalNoStartNoPrepare() throws InterruptedException {
         final Context c = getInstrumentation().getTargetContext();
         final CountDownLatch countDownLatch = new CountDownLatch(2);
@@ -356,7 +347,6 @@ public class PlaybackServiceMediaPlayerTest {
     }
 
     @Test
-    @UiThreadTest
     public void testPlayMediaObjectLocalStartNoPrepare() throws InterruptedException {
         final Context c = getInstrumentation().getTargetContext();
         final CountDownLatch countDownLatch = new CountDownLatch(2);
@@ -396,7 +386,6 @@ public class PlaybackServiceMediaPlayerTest {
     }
 
     @Test
-    @UiThreadTest
     public void testPlayMediaObjectLocalNoStartPrepare() throws InterruptedException {
         final Context c = getInstrumentation().getTargetContext();
         final CountDownLatch countDownLatch = new CountDownLatch(4);
@@ -438,7 +427,6 @@ public class PlaybackServiceMediaPlayerTest {
     }
 
     @Test
-    @UiThreadTest
     public void testPlayMediaObjectLocalStartPrepare() throws InterruptedException {
         final Context c = getInstrumentation().getTargetContext();
         final CountDownLatch countDownLatch = new CountDownLatch(5);
@@ -526,6 +514,13 @@ public class PlaybackServiceMediaPlayerTest {
                 if (assertionError == null)
                     assertionError = new AssertionFailedError("Unexpected call to shouldStop");
             }
+
+            @Override
+            public boolean onMediaPlayerError(Object inObj, int what, int extra) {
+                if (assertionError == null)
+                    assertionError = new AssertionFailedError("Unexpected call to onMediaPlayerError");
+                return false;
+            }
         });
         PlaybackServiceMediaPlayer psmp = new LocalPSMP(c, callback);
         Playable p = writeTestPlayable(playableFileUrl, PLAYABLE_LOCAL_URL);
@@ -542,55 +537,46 @@ public class PlaybackServiceMediaPlayerTest {
     }
 
     @Test
-    @UiThreadTest
     public void testPauseDefaultState() throws InterruptedException {
         pauseTestSkeleton(PlayerStatus.STOPPED, false, false, false, 1);
     }
 
     @Test
-    @UiThreadTest
     public void testPausePlayingStateNoAbandonNoReinitNoStream() throws InterruptedException {
         pauseTestSkeleton(PlayerStatus.PLAYING, false, false, false, LATCH_TIMEOUT_SECONDS);
     }
 
     @Test
-    @UiThreadTest
     public void testPausePlayingStateNoAbandonNoReinitStream() throws InterruptedException {
         pauseTestSkeleton(PlayerStatus.PLAYING, true, false, false, LATCH_TIMEOUT_SECONDS);
     }
 
     @Test
-    @UiThreadTest
     public void testPausePlayingStateAbandonNoReinitNoStream() throws InterruptedException {
         pauseTestSkeleton(PlayerStatus.PLAYING, false, true, false, LATCH_TIMEOUT_SECONDS);
     }
 
     @Test
-    @UiThreadTest
     public void testPausePlayingStateAbandonNoReinitStream() throws InterruptedException {
         pauseTestSkeleton(PlayerStatus.PLAYING, true, true, false, LATCH_TIMEOUT_SECONDS);
     }
 
     @Test
-    @UiThreadTest
     public void testPausePlayingStateNoAbandonReinitNoStream() throws InterruptedException {
         pauseTestSkeleton(PlayerStatus.PLAYING, false, false, true, LATCH_TIMEOUT_SECONDS);
     }
 
     @Test
-    @UiThreadTest
     public void testPausePlayingStateNoAbandonReinitStream() throws InterruptedException {
         pauseTestSkeleton(PlayerStatus.PLAYING, true, false, true, LATCH_TIMEOUT_SECONDS);
     }
 
     @Test
-    @UiThreadTest
     public void testPausePlayingStateAbandonReinitNoStream() throws InterruptedException {
         pauseTestSkeleton(PlayerStatus.PLAYING, false, true, true, LATCH_TIMEOUT_SECONDS);
     }
 
     @Test
-    @UiThreadTest
     public void testPausePlayingStateAbandonReinitStream() throws InterruptedException {
         pauseTestSkeleton(PlayerStatus.PLAYING, true, true, true, LATCH_TIMEOUT_SECONDS);
     }
@@ -618,6 +604,14 @@ public class PlaybackServiceMediaPlayerTest {
                 }
 
             }
+
+            @Override
+            public boolean onMediaPlayerError(Object inObj, int what, int extra) {
+                if (assertionError == null) {
+                    assertionError = new AssertionFailedError("Unexpected call of onMediaPlayerError");
+                }
+                return false;
+            }
         });
         PlaybackServiceMediaPlayer psmp = new LocalPSMP(c, callback);
         if (initialState == PlayerStatus.PREPARED || initialState == PlayerStatus.PLAYING || initialState == PlayerStatus.PAUSED) {
@@ -637,19 +631,16 @@ public class PlaybackServiceMediaPlayerTest {
     }
 
     @Test
-    @UiThreadTest
     public void testResumePausedState() throws InterruptedException {
         resumeTestSkeleton(PlayerStatus.PAUSED, LATCH_TIMEOUT_SECONDS);
     }
 
     @Test
-    @UiThreadTest
     public void testResumePreparedState() throws InterruptedException {
         resumeTestSkeleton(PlayerStatus.PREPARED, LATCH_TIMEOUT_SECONDS);
     }
 
     @Test
-    @UiThreadTest
     public void testResumePlayingState() throws InterruptedException {
         resumeTestSkeleton(PlayerStatus.PLAYING, 1);
     }
@@ -672,6 +663,13 @@ public class PlaybackServiceMediaPlayerTest {
                         countDownLatch.countDown();
                     }
                 }
+            }
+
+            @Override
+            public boolean onMediaPlayerError(Object inObj, int what, int extra) {
+                if (assertionError == null)
+                    assertionError = new AssertionFailedError("Unexpected call to onMediaPlayerError");
+                return false;
             }
         });
         PlaybackServiceMediaPlayer psmp = new LocalPSMP(c, callback);
@@ -702,25 +700,21 @@ public class PlaybackServiceMediaPlayerTest {
     }
 
     @Test
-    @UiThreadTest
     public void testPrepareInitializedState() throws InterruptedException {
         prepareTestSkeleton(PlayerStatus.INITIALIZED, LATCH_TIMEOUT_SECONDS);
     }
 
     @Test
-    @UiThreadTest
     public void testPreparePlayingState() throws InterruptedException {
         prepareTestSkeleton(PlayerStatus.PLAYING, 1);
     }
 
     @Test
-    @UiThreadTest
     public void testPreparePausedState() throws InterruptedException {
         prepareTestSkeleton(PlayerStatus.PAUSED, 1);
     }
 
     @Test
-    @UiThreadTest
     public void testPreparePreparedState() throws InterruptedException {
         prepareTestSkeleton(PlayerStatus.PREPARED, 1);
     }
@@ -744,6 +738,13 @@ public class PlaybackServiceMediaPlayerTest {
                     }
                 }
             }
+
+            @Override
+            public boolean onMediaPlayerError(Object inObj, int what, int extra) {
+                if (assertionError == null)
+                    assertionError = new AssertionFailedError("Unexpected call to onMediaPlayerError");
+                return false;
+            }
         });
         PlaybackServiceMediaPlayer psmp = new LocalPSMP(c, callback);
         Playable p = writeTestPlayable(playableFileUrl, PLAYABLE_LOCAL_URL);
@@ -763,25 +764,21 @@ public class PlaybackServiceMediaPlayerTest {
     }
 
     @Test
-    @UiThreadTest
     public void testReinitPlayingState() throws InterruptedException {
         reinitTestSkeleton(PlayerStatus.PLAYING, LATCH_TIMEOUT_SECONDS);
     }
 
     @Test
-    @UiThreadTest
     public void testReinitPausedState() throws InterruptedException {
         reinitTestSkeleton(PlayerStatus.PAUSED, LATCH_TIMEOUT_SECONDS);
     }
 
     @Test
-    @UiThreadTest
     public void testPreparedPlayingState() throws InterruptedException {
         reinitTestSkeleton(PlayerStatus.PREPARED, LATCH_TIMEOUT_SECONDS);
     }
 
     @Test
-    @UiThreadTest
     public void testReinitInitializedState() throws InterruptedException {
         reinitTestSkeleton(PlayerStatus.INITIALIZED, LATCH_TIMEOUT_SECONDS);
     }
